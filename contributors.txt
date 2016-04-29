@@ -1,0 +1,239 @@
+import nltk
+
+from nltk.tokenize import word_tokenize
+from nltk.tokenize import sent_tokenize
+from nltk.corpus import stopwords
+import string
+from nltk.stem.lancaster import LancasterStemmer
+
+
+name_list = []
+location_list = []
+month_list = []
+time_list = []
+occupation_list = []
+
+stopwordSet = stopwords.words('english')
+morePunctuations = set(['``','"','...',"''","n't","'re","'s","--"])
+punctuationSet = set(string.punctuation) | morePunctuations
+lancaster_stemmer = LancasterStemmer()
+
+
+def parse_story(story_filename):
+     story_dict = {}
+     with open(story_filename) as myfile:
+         parts = myfile.read().split("TEXT:")
+
+         headline = parts[0].splitlines()[0]
+         date = parts[0].splitlines()[1]
+         storyid = parts[0].splitlines()[2]
+         text = sent_tokenize(parts[1].lstrip("\n").replace("\n"," "))
+         story_dict[(headline,date,storyid)] = text
+     return story_dict
+
+
+def removeStopWordsAndTagPOS(story_dict):
+    storyWithoutStopWords_dict = {}
+    storyPOS_dict = {}
+    for key in story_dict:
+        text = story_dict[key]
+        for line in text:
+            words = word_tokenize(line)
+            lineWithoutStopWord = []
+            for word in words:
+                if word.lower() not in stopwordSet:
+                    if word.lower() not in punctuationSet:
+                        lineWithoutStopWord.append(word)
+            storyWithoutStopWords_dict[line] = lineWithoutStopWord
+            storyPOS_dict[line] = nltk.pos_tag(lineWithoutStopWord)
+
+    return storyWithoutStopWords_dict, storyPOS_dict
+
+def camel(s):
+    return (s != s.lower() and s != s.upper())
+
+def contains_proper_noun(question):
+    proper_noun = ""
+    wordsInAQuestion = word_tokenize(question)
+    questionWithoutStopWord = []
+    for word in wordsInAQuestion:
+        if word.lower() not in stopwordSet:
+            if word.lower() not in punctuationSet:
+                questionWithoutStopWord.append(word)
+
+    for word in questionWithoutStopWord:
+        if (camel(word)):
+            proper_noun = proper_noun +" "+ word
+
+    proper_noun_list = proper_noun.split()
+    for each_proper_noun in proper_noun_list:
+        if any(each_proper_noun in s for s in name_list):
+            return True
+        else:
+            return False
+
+
+def semantic_classes(name_filename):
+    with open(name_filename+"names.txt") as f:
+        name_list.append(f.read().splitlines())
+   # print(type(name_list))
+
+    with open(name_filename+"location.txt") as f:
+        location_list.append(f.read().splitlines())
+
+    with open(name_filename+"month.txt") as f:
+        month_list.append(f.read().lower().splitlines())
+
+    with open(name_filename+"time.txt") as f:
+        time_list.append(f.read().lower().splitlines())
+
+    with open(name_filename+"occupation.txt") as f:
+        occupation_list.append(f.read().lower().splitlines())
+#    print(occupation_list)
+
+
+def contains_name_word(sent):
+    proper_noun = ""
+    wordsInASent = word_tokenize(sent)
+    sentWithoutStopWord = []
+    for word in wordsInASent:
+                if word.lower() not in stopwordSet:
+                    if word.lower() not in punctuationSet:
+                        sentWithoutStopWord.append(word)
+
+    if any("name" in s for s in sentWithoutStopWord):
+        return True
+    else:
+        return False
+
+def contains_name_occupation(sent):
+    proper_noun = ""
+    wordsInASent = word_tokenize(sent)
+    sentWithoutStopWord = []
+    for word in wordsInASent:
+        if word.lower() not in stopwordSet:
+            if word.lower() not in punctuationSet:
+                sentWithoutStopWord.append(word)
+
+    for word in sentWithoutStopWord:
+        if (camel(word)):
+            proper_noun = proper_noun +" "+ word
+
+    proper_noun_list = proper_noun.split()
+
+    for each_proper_noun in proper_noun_list:
+        if any(each_proper_noun in s for s in name_list):
+            return True
+
+    for word in sentWithoutStopWord:
+        if any(word in s for s in occupation_list):
+         #   print(word)
+            return True
+    return False
+
+
+def who_rule(question, sent, storyPOS_dict):
+    score = 0
+    status = False
+    score = score+ wordMatch(question,sent,storyPOS_dict)
+    if(not contains_proper_noun(question) and contains_proper_noun(sent)):
+        score = score + 6
+    if (not contains_proper_noun(question) and contains_name_word(sent)):
+        score = score + 4
+    status = contains_name_occupation(sent)
+    if (status):
+        score = score + 4
+  #  print(score)
+
+def when_rule(question, sent):
+    print()
+
+def data_forward(questions_data,story_dict):
+    storyWithoutStopWords_dict,storyPOS_dict = removeStopWordsAndTagPOS(story_dict)
+
+    for question in questions_data:
+        for story_key in story_dict:
+            text_list = story_dict[story_key]
+            wordMatch(question[1],text_list,storyPOS_dict)
+            for sent in text_list:
+                who_rule(question[1],sent,storyPOS_dict)
+
+def wordMatch(question, text, storyPOS_dict):
+    wordsInAQuestion = word_tokenize(question)
+    rootsInAQuestion = set()
+    for word in wordsInAQuestion:
+        root = lancaster_stemmer.stem(word)
+        rootsInAQuestion.add(root)
+
+    for line in storyPOS_dict:
+        verbmatch_score = 0
+        rootmatch_score = 0
+        scoreOfALine = {}
+        for (word,tag) in storyPOS_dict[line]:
+            if 'V' in tag:
+                verb_root = lancaster_stemmer.stem(word)
+                if verb_root in rootsInAQuestion:
+                    verbmatch_score = verbmatch_score + 6
+            else:
+                word_root = lancaster_stemmer.stem(word)
+                if word_root in rootsInAQuestion:
+                    rootmatch_score = rootmatch_score + 3
+        scoreOfALine[line] = rootmatch_score + verbmatch_score
+#         print(scoreOfALine)
+# print("\n")
+
+
+def main():
+    input_path = "/Users/roshaninagmote/Downloads/sample/"
+    input_file = open(input_path+"/input.txt")
+    semantic_classes("/Users/roshaninagmote/PycharmProjects/question-answers/")
+
+
+    input_data = input_file.read().splitlines()
+    path = input_data[0]
+
+    for i in range(1,len(input_data)):
+
+        each_story = input_data[i]+".story"
+        each_question = input_data[i]+".questions"
+        story_file = open(input_path+each_story)
+        questions_file = open(input_path+each_question)
+        story_data = story_file.read()
+        questions_data_raw = questions_file.read().splitlines()
+        questions_total = filter(None, questions_data_raw)
+
+        que = questions_file.read()
+
+        questions_data = []
+        for j in range(0,len(questions_total),3):
+            question_temp = []
+            quesid = questions_total[j].split(":")[1].lstrip(" ")
+            question_temp.append(quesid)
+            ques = questions_total[j+1].split(":")[1].lstrip(" ")
+            question_temp.append(ques)
+            question_temp.append(questions_total[j+2])
+
+            questions_data.append(question_temp)
+
+
+        story_dict = parse_story(input_path+each_story)
+     #   print(story_dict)
+        data_forward(questions_data,story_dict)
+    print("\n")
+
+if __name__ == "__main__":
+    main()
+
+
+ if not any(word in question[1].lower() for word in quest_words):
+                print("roshani")
+                max_score_else = 0
+                for sent in text_list:
+                    current_score = wordMatch(question[1],sent,storyPOS_dict)
+                    if current_score > max_score_else:
+                        max_score_else = current_score
+                        answer = sent
+               # print "in else", question[1], sent
+                print "QuestionID:",question[0]
+                print "Answer:", answer
+        print("\n")

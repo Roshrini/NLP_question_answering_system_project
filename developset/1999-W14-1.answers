@@ -1,0 +1,40 @@
+QuestionID: 1999-W14-1-2
+Question: How does the virus trick people into thinking they've received an e-mail from a person they know?
+Answer: the virus takes real addresses out of a users own address books | the virus reads the user's e-mail address book and sends an infected message to the first 50 entries
+Difficulty: Moderate
+
+QuestionID: 1999-W14-1-4
+Question: Why does the virus have the potential to clog e-mail servers?
+Answer: The virus launches documents into cyberspace
+Difficulty: Moderate
+
+QuestionID: 1999-W14-1-5
+Question: What three companies have had files affected by the virus?
+Answer: Charles Schwab and Co., Lucent Technologies, the Intel Corporation
+Difficulty: Moderate
+
+QuestionID: 1999-W14-1-6
+Question: Who has a Computer Emergency Response Team?
+Answer: Carnegie Mellon University
+Difficulty: Easy
+
+QuestionID: 1999-W14-1-7
+Question: Who is Ms. Fithen?
+Answer: a member of the Computer Emergency Response Team | a member of the Computer Emergency Response Team at Carnegie Mellon University
+Difficulty: Moderate
+
+QuestionID: 1999-W14-1-8
+Question: When did Carnagie Mellon learn of the virus?
+Answer: Friday afternoon
+Difficulty: Easy
+
+QuestionID: 1999-W14-1-9
+Question: What do "patches" from antivirus software makers do?
+Answer: detect and reject the virus
+Difficulty: Moderate
+
+QuestionID: 1999-W14-1-10
+Question: What can you do to protect yourself against "Melissa" and similar viruses?
+Answer: NEVER OPEN A DOCUMENT ATTACHMENT FROM SOMEONE YOU DON'T KNOW | by not opening the attachments
+Difficulty: Moderate
+
